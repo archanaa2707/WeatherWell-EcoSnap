@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="tab-container" style="margin-top: 20px;">
+            <button class="tab-button active" onclick="openTab('weather')">WeatherWell</button>
+            <button class="tab-button" onclick="openTab('ecotravel')">ECO-SNAP</button>
+        </div>
+
+        <div id="weather" class="tab-content">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h2>WEATHERWELL</h2>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('start') }}" method="POST">
+                        <div class="text-center mb-4">
+                            <h4>How are you traveling?</h4>
+                        </div>
+                        <div class="d-grid gap-3">
+                            <button type="submit" name="travel_type" value="individual" 
+                                    class="btn btn-primary btn-lg">
+                                Individual Travel
+                            </button>
+                            <button type="submit" name="travel_type" value="group" 
+                                    class="btn btn-primary btn-lg">
+                                Group Travel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- EcoTravel Tab Content -->
+        <div id="ecotravel" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header bg-success text-white text-center">
+                    <h2>ECO-SNAP</h2>
+                </div>
+                <div class="card-body">
+                    <div class="eco-stats">
+                        <h3>Your Eco-Snap Progress</h3>
+                        <p>You've planted: <span class="tree-count" id="treeCount">0 trees</span></p>
+                        <p>Current streak: <span id="streakDays">0 days</span></p>
+                    </div>
+                    
+                    <h3>Today's Tasks</h3>
+                    
+                    <div class="task">
+                        <h4>Use a reusable water bottle</h4>
+                        <p>Avoid single-use plastic by refilling your bottle</p>
+                        <button class="btn btn-success" onclick="completeTask()">I did this!</button>
+                    </div>
+                    
+                    <div class="task">
+                        <h4>Take public transport</h4>
+                        <p>Reduce emissions by using buses/trains</p>
+                        <button class="btn btn-success" onclick="completeTask()">I did this!</button>
+                    </div>
+                    
+                    <div class="task">
+                        <h4>Pick up 3 pieces of litter</h4>
+                        <p>Help keep your travel destination clean</p>
+                        <button class="btn btn-success" onclick="completeTask()">I did this!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tab-container {
+        display: flex;
+        margin-bottom: -1px; 
+    }
+    
+    .tab-button {
+        padding: 12px 20px;
+        background: #e9ecef;
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        cursor: pointer;
+        flex: 1;
+        font-weight: bold;
+        border-radius: 5px 5px 0 0;
+    }
+    
+    .tab-button.active {
+        background: white;
+        color: #495057;
+        border-bottom: 1px solid white;
+        margin-bottom: -1px;
+    }
+    
+    .tab-content {
+        display: none;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 5px 5px;
+        background: white;
+    }
+    
+    /* EcoTravel Styles */
+    .eco-stats {
+        background-color: #e6ffe6;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .tree-count {
+        font-size: 24px;
+        font-weight: bold;
+        color: #006400;
+    }
+    
+    .task {
+        background-color: #f9f9f9;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #3cb371;
+    }
+</style>
+
+<script>
+    function openTab(tabName) {
+        const tabContents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].style.display = "none";
+        }
+        const tabButtons = document.getElementsByClassName("tab-button");
+        for (let i = 0; i < tabButtons.length; i++) {
+            tabButtons[i].classList.remove("active");
+        }
+        document.getElementById(tabName).style.display = "block";
+        event.currentTarget.classList.add("active");
+    }
+    window.onload = function() {
+        openTab('weather'); 
+        loadEcoData(); 
+    };
+    
+    let trees = 0;
+    let streak = 0;
+    let lastCompletionDate = null;
+    
+    function loadEcoData() {
+        if(localStorage.getItem('ecoTrees')) {
+            trees = parseInt(localStorage.getItem('ecoTrees'));
+            streak = parseInt(localStorage.getItem('ecoStreak'));
+            lastCompletionDate = localStorage.getItem('lastCompletionDate');
+            
+            updateEcoDisplay();
+            checkEcoStreak();
+        }
+    }
+    
+    function completeTask() {
+        const today = new Date().toDateString();
+        
+        if (lastCompletionDate !== today) {
+            trees++;
+            
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (lastCompletionDate === yesterday.toDateString()) {
+                streak++;
+            } else if (lastCompletionDate !== today) {
+                streak = 1;
+            }
+            
+            lastCompletionDate = today;
+            updateEcoDisplay();
+            localStorage.setItem('ecoTrees', trees);
+            localStorage.setItem('ecoStreak', streak);
+            localStorage.setItem('lastCompletionDate', lastCompletionDate);
+            
+            alert("Great job! +1 tree to your collection");
+        } else {
+            alert("You've already completed a task today! Come back tomorrow for more.");
+        }
+    }
+    
+    function checkEcoStreak() {
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        if (lastCompletionDate !== today.toDateString() && 
+            lastCompletionDate !== yesterday.toDateString()) {
+            streak = 0;
+            updateEcoDisplay();
+        }
+    }
+    
+    function updateEcoDisplay() {
+        document.getElementById('treeCount').textContent = `${trees} ${trees === 1 ? 'tree' : 'trees'}`;
+        document.getElementById('streakDays').textContent = `${streak} ${streak === 1 ? 'day' : 'days'}`;
+    }
+</script>
+{% endblock %}
